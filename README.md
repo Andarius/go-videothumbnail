@@ -1,4 +1,4 @@
-# Go-vidthumb
+# Go-videothumbnail
 
 
 Generate thumbnails from videos.
@@ -12,7 +12,7 @@ docker run --name thumb-gen \
     -p 127.0.0.1:8080:8080 \
     -u "$(id -u):$(id -g)" \
     -d \
-    andarius/go-vidthumbnail:latest
+    andarius/go-videothumbnail:latest
 
 # Call endpoint
 curl http://127.0.0.1:8080/gen-thumb\?path\=/static/video.mp4\&output\=/static/thumb.png

@@ -3,6 +3,8 @@
 
 Generate thumbnails from videos.
 
+Endpoint: `/gen-thumb` will return the dimensions of the video and the thumbnail.
+
 ### How to use
 
 ```bash

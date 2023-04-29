@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -24,8 +24,6 @@ func genThumb(videoPath string, outputPath string) string {
 	outputPath).Output()
 
 
-	fmt.Printf("Command finished with error: %s", err)
-	fmt.Printf("Output: %s", string(out))
     if err != nil {
         log.Fatal(err)
     }
@@ -33,7 +31,7 @@ func genThumb(videoPath string, outputPath string) string {
 }
 
 
-func getVideoDimensions(videoPath string) string {
+func getVideoDimensions(videoPath string) map[string]int16 {
 
     out, err := exec.Command(
 		"ffprobe",
@@ -46,24 +44,37 @@ func getVideoDimensions(videoPath string) string {
     if err != nil {
         log.Fatal(err)
     }
-	return strings.TrimSpace(string(out))
+
+	dimensionsStr := strings.Split(strings.TrimSpace(string(out)), "x")
+
+	dimensions := make(map[string]int16)
+	width, widthErr := strconv.ParseInt(dimensionsStr[0], 10, 16)
+	if widthErr != nil {
+        log.Fatal(err)
+    }
+	height, heightErr := strconv.ParseInt(dimensionsStr[1], 10, 16)
+	if heightErr != nil {
+		log.Fatal(err)
+	}
+
+	dimensions["width"] = int16(width)
+	dimensions["height"] = int16(height)
+	return dimensions
 }
 
 func genThumbHandler(w http.ResponseWriter, r *http.Request) {
 	videoPath := r.FormValue("path")
 	outputPath := r.FormValue("output")
 
-	videoDimensions := getVideoDimensions(videoPath)
+	dimensions := getVideoDimensions(videoPath)
 
 	genThumb(videoPath, outputPath)
 
 	// Writing response
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	resp := make(map[string]string)
 
-	resp["dimensions"] = videoDimensions
-	jsonResp, err := json.Marshal(resp)
+	jsonResp, err := json.Marshal(dimensions)
 	if err != nil {
 		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
 	}

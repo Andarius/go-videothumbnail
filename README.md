@@ -8,7 +8,9 @@ Endpoint: `/gen-thumb` will return the dimensions of the video and the thumbnail
 ### How to use
 
 ```bash
-# Start docker image
+# Run locally
+go run main.go
+# Or Start docker image
 docker run --name thumb-gen \
     -v "$(pwd)/static/:/static" \
     -p 127.0.0.1:8080:8080 \
@@ -22,3 +24,6 @@ curl http://127.0.0.1:8080/gen-thumb\?path\=/static/video.mp4\&output\=/static/t
 # Stop docker image
 docker stop thumb-gen && docker rm thumb-gen
 ```
+
+
+

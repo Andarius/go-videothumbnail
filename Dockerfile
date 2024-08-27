@@ -15,7 +15,7 @@ WORKDIR /go/delivery
 
 COPY . .
 
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/server
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.version=0.1.0" -o /go/bin/server
 
 
 FROM alpine:3.17
@@ -26,6 +26,10 @@ COPY --from=builder /go/bin/server /go/bin/server
 
 RUN apk add --no-cache ffmpeg
 USER appuser:appuser
+
+LABEL version="0.1.0"
+LABEL organization="Obitrain"
+
 
 EXPOSE 8080
 

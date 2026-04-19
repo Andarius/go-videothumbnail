@@ -1,16 +1,53 @@
-# Go-videothumbnail
+# go-videothumbnail
 
+Lightweight HTTP service that generates JPEG thumbnails from videos using FFmpeg.
 
-Generate thumbnails from videos.
+## Requirements
 
-Endpoint: `/gen-thumb` will return the dimensions of the video and the thumbnail.
+- Go 1.22+
+- FFmpeg and FFprobe installed
 
-### How to use
+## Endpoints
+
+### `GET /gen-thumb`
+
+Generates a thumbnail from a video file.
+
+| Parameter | Description |
+|-----------|-------------|
+| `path`    | Absolute path to the input video file |
+| `output`  | Absolute path for the generated thumbnail |
+
+Returns `201` with video dimensions:
+
+```json
+{"width": 1920, "height": 1080}
+```
+
+Returns `500` with error details on failure:
+
+```json
+{"error": "generate thumbnail for /path/to/video.mp4: ffmpeg failed: ..."}
+```
+
+### `GET /health`
+
+Health check endpoint, returns `200`.
+
+## Configuration
+
+| Environment variable | Description | Required |
+|---------------------|-------------|----------|
+| `SENTRY_DSN`        | Sentry DSN for error tracking | No |
+| `RELEASE_STAGE`     | Release identifier sent to Sentry | No |
+
+## Usage
 
 ```bash
 # Run locally
 go run main.go
-# Or Start docker image
+
+# Docker
 docker run --name thumb-gen \
     -v "$(pwd)/static/:/static" \
     -p 127.0.0.1:8080:8080 \
@@ -18,12 +55,9 @@ docker run --name thumb-gen \
     -d \
     andarius/go-videothumbnail:latest
 
-# Call endpoint
-curl http://127.0.0.1:8080/gen-thumb\?path\=/static/video.mp4\&output\=/static/thumb.png
+# Generate a thumbnail
+curl "http://127.0.0.1:8080/gen-thumb?path=/static/video.mp4&output=/static/thumb.jpeg"
 
-# Stop docker image
+# Stop
 docker stop thumb-gen && docker rm thumb-gen
 ```
-
-
-

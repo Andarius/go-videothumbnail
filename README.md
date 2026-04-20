@@ -1,5 +1,7 @@
 # go-videothumbnail
 
+[![Docker Hub](https://img.shields.io/docker/v/andarius/go-videothumbnail?sort=semver&label=Docker%20Hub)](https://hub.docker.com/r/andarius/go-videothumbnail)
+
 Lightweight HTTP service that generates JPEG thumbnails from videos using FFmpeg.
 
 ## Requirements

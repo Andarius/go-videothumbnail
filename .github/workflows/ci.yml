@@ -18,6 +18,18 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
 
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: go test -v ./...
+
   build:
     runs-on: ubuntu-latest
     steps:

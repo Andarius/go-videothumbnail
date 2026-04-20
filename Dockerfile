@@ -20,7 +20,8 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -ldflags="-w -s -X main.version=${VERSION}" -o /go/bin/server
+ARG BUILD_TAGS=""
+RUN go build -tags="${BUILD_TAGS}" -ldflags="-w -s -X main.version=${VERSION}" -o /go/bin/server
 
 
 FROM alpine:3.21

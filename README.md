@@ -40,6 +40,8 @@ Health check endpoint, returns `200`.
 |---------------------|-------------|----------|
 | `SENTRY_DSN`        | Sentry DSN for error tracking | No |
 | `RELEASE_STAGE`     | Release identifier sent to Sentry | No |
+| `SENTRY_TRACES_SAMPLE_RATE` | Sentry traces sample rate (default: `1.0`) | No |
+| `SENTRY_PROFILES_SAMPLE_RATE` | Sentry profiles sample rate (default: `1.0`) | No |
 
 ## Usage
 

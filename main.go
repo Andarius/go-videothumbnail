@@ -3,18 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/getsentry/sentry-go"
-	sentryhttp "github.com/getsentry/sentry-go/http"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
-	"time"
 )
-
-var sentryEnabled bool
 
 func genThumb(videoPath string, outputPath string) (string, error) {
 	out, err := exec.Command("ffmpeg",
@@ -68,21 +63,12 @@ func getVideoDimensions(videoPath string) (map[string]int16, error) {
 	return dimensions, nil
 }
 
-func captureMessage(r *http.Request, msg string) {
-	if !sentryEnabled {
-		return
-	}
-	if hub := sentry.GetHubFromContext(r.Context()); hub != nil {
-		hub.CaptureMessage(msg)
-	}
-}
-
 func writeError(w http.ResponseWriter, r *http.Request, msg string, status int) {
 	log.Println("Error:", msg)
-	captureMessage(r, msg)
+	reportError(r, msg)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
 
 func genThumbHandler(w http.ResponseWriter, r *http.Request) {
@@ -104,50 +90,24 @@ func genThumbHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(dimensions)
+	_ = json.NewEncoder(w).Encode(dimensions)
 }
 
 func main() {
-	dsn := os.Getenv("SENTRY_DSN")
-	sentryEnabled = dsn != ""
-
-	if sentryEnabled {
-		sentryInitErr := sentry.Init(sentry.ClientOptions{
-			Dsn:                dsn,
-			Release:            os.Getenv("RELEASE_STAGE"),
-			EnableTracing:      true,
-			TracesSampleRate:   1.0,
-			ProfilesSampleRate: 1.0,
-		})
-		if sentryInitErr != nil {
-			log.Fatalf("sentry.Init: %s", sentryInitErr)
-		}
-		defer sentry.Flush(2 * time.Second)
-		log.Println("Sentry enabled")
-	}
+	cleanup := initMonitoring()
+	defer cleanup()
 
 	mux := http.NewServeMux()
-
-	// Wrap handlers with Sentry middleware only if enabled
-	if sentryEnabled {
-		sentryHandler := sentryhttp.New(sentryhttp.Options{})
-		mux.HandleFunc("/gen-thumb", sentryHandler.HandleFunc(genThumbHandler))
-		mux.HandleFunc("/health", sentryHandler.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"status": "ok"}`))
-		}))
-	} else {
-		mux.HandleFunc("/gen-thumb", genThumbHandler)
-		mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"status": "ok"}`))
-		})
-	}
+	mux.HandleFunc("/openapi.json", openapiHandler)
+	mux.HandleFunc("/gen-thumb", genThumbHandler)
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status": "ok"}`))
+	})
 
 	log.Println("Starting server on port 8080...")
-	err := http.ListenAndServe(":8080", mux)
+	err := http.ListenAndServe(":8080", monitoringMiddleware(mux))
 	if err != nil {
 		log.Fatalf("Error happened while starting server. Err: %s", err)
 	}

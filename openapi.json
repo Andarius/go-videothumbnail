@@ -1,0 +1,100 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "go-videothumbnail",
+    "description": "Lightweight HTTP service that generates JPEG thumbnails from videos using FFmpeg.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/gen-thumb": {
+      "get": {
+        "summary": "Generate a thumbnail from a video",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "description": "Absolute path to the input video file",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "output",
+            "in": "query",
+            "required": true,
+            "description": "Absolute path for the generated thumbnail",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Thumbnail generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "width": { "type": "integer" },
+                    "height": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error generating thumbnail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "summary": "OpenAPI specification",
+        "responses": {
+          "200": {
+            "description": "OpenAPI 3.0 specification",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  }
+}

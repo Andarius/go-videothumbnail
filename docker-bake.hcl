@@ -2,26 +2,22 @@ variable "VERSION" {
   default = "dev"
 }
 
-variable "REGISTRY" {
-  default = "andarius/go-videothumbnail"
-}
-
-variable "TAGS" {
-  default = []
-}
-
 group "default" {
   targets = ["default", "sentry"]
 }
 
+target "docker-metadata-action" {
+  tags = []
+}
+
 target "default" {
+  inherits   = ["docker-metadata-action"]
   context    = "."
   dockerfile = "Dockerfile"
   args = {
     VERSION    = VERSION
     BUILD_TAGS = ""
   }
-  tags   = TAGS
   labels = {
     "organization" = "Obitrain"
   }
@@ -33,5 +29,5 @@ target "sentry" {
     VERSION    = VERSION
     BUILD_TAGS = "sentry"
   }
-  tags = [for tag in TAGS : "${tag}-sentry"]
+  tags = [for tag in target.docker-metadata-action.tags : "${tag}-sentry"]
 }

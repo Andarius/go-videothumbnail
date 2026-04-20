@@ -8,6 +8,9 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tags: ["", "sentry"]
     steps:
       - uses: actions/checkout@v5
 
@@ -17,6 +20,8 @@ jobs:
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
+        with:
+          args: --build-tags=${{ matrix.tags }}
 
   test:
     runs-on: ubuntu-latest
@@ -32,6 +37,9 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tags: ["", "sentry"]
     steps:
       - uses: actions/checkout@v5
 
@@ -40,12 +48,12 @@ jobs:
           go-version-file: go.mod
 
       - name: Build
-        run: go build -o /dev/null .
+        run: go build -tags="${{ matrix.tags }}" -o /dev/null .
 
   docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
-      - name: Build Docker image
-        run: docker build -t go-videothumbnail:test .
+      - name: Build Docker images
+        run: docker buildx bake --file docker-bake.hcl

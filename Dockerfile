@@ -33,8 +33,6 @@ COPY --from=builder /go/bin/server /go/bin/server
 RUN apk add --no-cache ffmpeg
 USER appuser:appuser
 
-LABEL organization="Obitrain"
-
 EXPOSE 8080
 
 ENTRYPOINT ["/go/bin/server"]

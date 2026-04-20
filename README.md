@@ -43,6 +43,18 @@ Health check endpoint, returns `200`.
 | `SENTRY_TRACES_SAMPLE_RATE` | Sentry traces sample rate (default: `1.0`) | No |
 | `SENTRY_PROFILES_SAMPLE_RATE` | Sentry profiles sample rate (default: `1.0`) | No |
 
+## Sentry support
+
+Sentry is optional and excluded from the default build. To enable it, use the `sentry` build tag:
+
+```bash
+# Local build with Sentry
+go build -tags sentry -o server .
+
+# Docker build with Sentry
+docker build --build-arg BUILD_TAGS=sentry -t go-videothumbnail .
+```
+
 ## Usage
 
 ```bash

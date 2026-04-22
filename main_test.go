@@ -113,11 +113,8 @@ func writeJPEG(t *testing.T, path string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer f.Close() //nolint:errcheck // test helper, encode error takes precedence
 	if err := jpeg.Encode(f, img, nil); err != nil {
-		f.Close()
-		t.Fatal(err)
-	}
-	if err := f.Close(); err != nil {
 		t.Fatal(err)
 	}
 }

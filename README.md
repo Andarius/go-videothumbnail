@@ -26,6 +26,12 @@ Returns `201` with video dimensions:
 {"width": 1920, "height": 1080}
 ```
 
+Returns `400` if the file is not a supported video format:
+
+```json
+{"error": "unsupported format \"jpeg_pipe\" for /path/to/file.mov"}
+```
+
 Returns `500` with error details on failure:
 
 ```json

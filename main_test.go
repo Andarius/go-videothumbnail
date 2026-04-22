@@ -2,8 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"image"
+	"image/color"
+	"image/jpeg"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -84,6 +89,72 @@ func TestGenThumbHandlerMissingVideo(t *testing.T) {
 
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("expected status 500, got %d", w.Code)
+	}
+
+	var body map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if body["error"] == "" {
+		t.Fatal("expected error message in response")
+	}
+}
+
+// writeJPEG creates a valid JPEG file at the given path.
+func writeJPEG(t *testing.T, path string) {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, 64, 64))
+	for y := range 64 {
+		for x := range 64 {
+			img.Set(x, y, color.RGBA{R: 255, A: 255})
+		}
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := jpeg.Encode(f, img, nil); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestGetVideoFormat(t *testing.T) {
+	t.Run("unsupported jpeg disguised as mov", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		fakeMov := filepath.Join(tmpDir, "fake.mov")
+		writeJPEG(t, fakeMov)
+
+		format, err := getVideoFormat(fakeMov)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if supportedFormats[format] {
+			t.Fatalf("expected unsupported format, got %q", format)
+		}
+	})
+
+	t.Run("nonexistent file", func(t *testing.T) {
+		_, err := getVideoFormat("/nonexistent/video.mp4")
+		if err == nil {
+			t.Fatal("expected error for nonexistent file")
+		}
+	})
+}
+
+func TestGenThumbHandlerUnsupportedFormat(t *testing.T) {
+	tmpDir := t.TempDir()
+	fakeMov := filepath.Join(tmpDir, "fake.mov")
+	writeJPEG(t, fakeMov)
+	output := filepath.Join(tmpDir, "out.jpeg")
+
+	req := httptest.NewRequest(http.MethodGet, "/gen-thumb?path="+fakeMov+"&output="+output, nil)
+	w := httptest.NewRecorder()
+
+	genThumbHandler(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", w.Code)
 	}
 
 	var body map[string]string

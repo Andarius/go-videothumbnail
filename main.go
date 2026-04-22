@@ -11,6 +11,29 @@ import (
 	"strings"
 )
 
+var supportedFormats = map[string]bool{
+	"mov,mp4,m4a,3gp,3g2,mj2": true,
+	"matroska,webm":            true,
+	"avi":                      true,
+	"flv":                      true,
+	"mpegts":                   true,
+	"asf":                      true,
+}
+
+func getVideoFormat(videoPath string) (string, error) {
+	out, err := exec.Command(
+		"ffprobe",
+		"-v", "error",
+		"-show_entries", "format=format_name",
+		"-of", "default=noprint_wrappers=1:nokey=1",
+		videoPath).CombinedOutput()
+	output := strings.TrimSpace(string(out))
+	if err != nil {
+		return "", fmt.Errorf("ffprobe failed: %s", output)
+	}
+	return output, nil
+}
+
 func genThumb(videoPath string, outputPath string) (string, error) {
 	out, err := exec.Command("ffmpeg",
 		"-y",                                 // override output file if exists
@@ -74,6 +97,16 @@ func writeError(w http.ResponseWriter, r *http.Request, msg string, status int) 
 func genThumbHandler(w http.ResponseWriter, r *http.Request) {
 	videoPath := r.FormValue("path")
 	outputPath := r.FormValue("output")
+
+	format, fmtErr := getVideoFormat(videoPath)
+	if fmtErr != nil {
+		writeError(w, r, fmt.Sprintf("detect format for %s: %s", videoPath, fmtErr), http.StatusInternalServerError)
+		return
+	}
+	if !supportedFormats[format] {
+		writeError(w, r, fmt.Sprintf("unsupported format %q for %s", format, videoPath), http.StatusBadRequest)
+		return
+	}
 
 	dimensions, dimErr := getVideoDimensions(videoPath)
 	if dimErr != nil {

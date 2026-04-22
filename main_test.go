@@ -113,8 +113,11 @@ func writeJPEG(t *testing.T, path string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer f.Close()
 	if err := jpeg.Encode(f, img, nil); err != nil {
+		f.Close()
+		t.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -126,10 +129,9 @@ func TestGetVideoFormat(t *testing.T) {
 		writeJPEG(t, fakeMov)
 
 		format, err := getVideoFormat(fakeMov)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if supportedFormats[format] {
+		// ffprobe may detect "jpeg_pipe" or error out depending on version;
+		// either way the file must not be in the supported set.
+		if err == nil && supportedFormats[format] {
 			t.Fatalf("expected unsupported format, got %q", format)
 		}
 	})

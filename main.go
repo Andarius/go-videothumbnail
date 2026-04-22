@@ -100,6 +100,11 @@ func genThumbHandler(w http.ResponseWriter, r *http.Request) {
 
 	format, fmtErr := getVideoFormat(videoPath)
 	if fmtErr != nil {
+		// If the file exists but ffprobe can't identify it, it's not a video
+		if _, statErr := os.Stat(videoPath); statErr == nil {
+			writeError(w, r, fmt.Sprintf("unsupported file for %s: %s", videoPath, fmtErr), http.StatusBadRequest)
+			return
+		}
 		writeError(w, r, fmt.Sprintf("detect format for %s: %s", videoPath, fmtErr), http.StatusInternalServerError)
 		return
 	}

@@ -88,7 +88,9 @@ func getVideoDimensions(videoPath string) (map[string]int16, error) {
 
 func writeError(w http.ResponseWriter, r *http.Request, msg string, status int) {
 	log.Println("Error:", msg)
-	reportError(r, msg)
+	if status >= 500 {
+		reportError(r, msg)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})

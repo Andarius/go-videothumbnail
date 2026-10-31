@@ -24,7 +24,7 @@ ARG BUILD_TAGS=""
 RUN go build -tags="${BUILD_TAGS}" -ldflags="-w -s -X main.version=${VERSION}" -o /go/bin/server
 
 
-FROM alpine:3.21
+FROM alpine:3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
 
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group

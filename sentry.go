@@ -39,11 +39,10 @@ func initMonitoring() func() {
 	}
 
 	sentryInitErr := sentry.Init(sentry.ClientOptions{
-		Dsn:                dsn,
-		Release:            os.Getenv("RELEASE_STAGE"),
-		EnableTracing:      true,
-		TracesSampleRate:   getEnvFloat("SENTRY_TRACES_SAMPLE_RATE", 1.0),
-		ProfilesSampleRate: getEnvFloat("SENTRY_PROFILES_SAMPLE_RATE", 1.0),
+		Dsn:              dsn,
+		Release:          os.Getenv("RELEASE_STAGE"),
+		EnableTracing:    true,
+		TracesSampleRate: getEnvFloat("SENTRY_TRACES_SAMPLE_RATE", 1.0),
 	})
 	if sentryInitErr != nil {
 		log.Fatalf("sentry.Init: %s", sentryInitErr)
